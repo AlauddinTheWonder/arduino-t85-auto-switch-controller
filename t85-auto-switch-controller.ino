@@ -10,16 +10,20 @@
    W/o  drift: 1908 bytes
 */
 
-#include "Watchdog.h"
+#include "watchdog-t85.h"
 #include "functions.h"
-#include "TimeFunctions.h"
+#include "time-functions.h"
+#include "config.h"
 
+
+#ifndef TOTAL_SWT
+#define TOTAL_SWT 0 // should define on main ino
+#endif
 
 // Watchdog Settings
-#define watchdog_mode 9  // 6=1sec (0.5sec), 7=2sec (1sec), 8=4sec (3.2sec), 9=8sec (7.4sec)
-#define wtd_cnt_reset 75 // Actual task will be executed after this counter.
+#define WATCHDOG_MODE 9  // 6=1sec (0.5sec), 7=2sec (1sec), 8=4sec (3.2sec), 9=8sec (7.4sec)
+#define WD_CNT_RESET 75 // Actual task will be executed after this counter.
 byte wtd_cnt = 0;        // Counter for task execution comparision.
-
 
 /*
    Pins Setting
@@ -27,14 +31,6 @@ byte wtd_cnt = 0;        // Counter for task execution comparision.
    Pin0 - RTC SDA (Phy Pin5) - occupied
    Pin2 - RTC SCL (Phy Pin7) - occupied
 */
-
-#define TOTAL_SWT 3     // 3 Switch controller
-
-// Time schedule (in Hour) -- Same on and off value means disable
-// Switches                    = { Pin, OnHour, OffHour }
-uint8_t Switches[TOTAL_SWT][3] = { {1, 6, 23}, {3, 9, 18}, {4, 8, 0} };
-uint8_t driftSecond = 2;      // To adjust RTC time drift every hour in seconds. Many RTC drift time.
-
 
 int last_hour = -1;           // Last hour to compare current hour change, used in sync time drift.
 boolean initialized = false;  // Flag to check whether running first time after powering up, used in sync time drift.
@@ -51,7 +47,7 @@ void setup() {
 
   connectRTC();
 
-  setup_watchdog(watchdog_mode);
+  setup_watchdog(WATCHDOG_MODE);
 
   delay(500);
 }
@@ -105,7 +101,7 @@ void loop() {
 
   wtd_cnt++;
 
-  if (wtd_cnt >= wtd_cnt_reset) {
+  if (wtd_cnt >= WD_CNT_RESET) {
     wtd_cnt = 0;
   }
 
